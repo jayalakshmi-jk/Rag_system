@@ -1,0 +1,19 @@
+# Local run of the production image:  docker compose up --build
+# Requires a .env file (copy .env.example). Secrets are read from it, never baked into the image.
+services:
+  app:
+    build: .
+    image: rag-document-chat:local
+    env_file: .env
+    environment:
+      PORT: "8000"
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
