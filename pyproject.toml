@@ -1,0 +1,60 @@
+[project]
+name = "rag-document-chat"
+version = "1.0.0"
+description = "Private AI document workspace: chat with your PDF, TXT and Markdown files in English, Tamil and Tanglish."
+requires-python = ">=3.12"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["app", "tests", "scripts"]
+extend-exclude = [".venv", "static/vendor"]
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "N", "UP", "B", "A", "C4", "SIM", "S", "ASYNC", "PT", "RUF", "T20", "RET"]
+ignore = [
+  "RUF001", # Tamil / typographic characters are intentional
+  "RUF002",
+  "RUF003",
+]
+
+[tool.ruff.lint.flake8-bugbear]
+extend-immutable-calls = [
+  "fastapi.Depends",
+  "fastapi.File",
+  "fastapi.Form",
+  "fastapi.Query",
+  "fastapi.Body",
+  "fastapi.Security",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"app/logging.py" = ["A005"]  # spec-mandated module name; imports are absolute
+"tests/**" = ["S101", "S105", "S106", "S311", "PT011", "PT012"]
+"scripts/**" = ["T201"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+plugins = ["pydantic.mypy"]
+files = ["app", "scripts", "tests"]
+warn_unused_ignores = true
+
+[[tool.mypy.overrides]]
+module = ["tests.*"]
+disallow_untyped_defs = false
+disallow_untyped_decorators = false
+disallow_incomplete_defs = false
+check_untyped_defs = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+addopts = "-ra"
+markers = [
+  "db: integration tests that need a real Postgres (set TEST_DATABASE_URL)",
+]
+filterwarnings = [
+  "ignore::DeprecationWarning:websockets.*",
+  "ignore::DeprecationWarning:supabase.*",
+]

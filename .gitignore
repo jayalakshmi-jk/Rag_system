@@ -1,0 +1,28 @@
+# Secrets: never commit these
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Tooling / editors
+.idea/
+.vscode/
+.DS_Store
+node_modules/
+
+# Local test artifacts
+/tmp/
+*.log
+.pgdata/
