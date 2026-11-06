@@ -4,11 +4,47 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Workspace · RAG Document Chat</title>
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/static/style.css">
+  <script src="/static/vendor/supabase.js" integrity="sha384-0w2KAL2YHP6wKOkUDzkCDGgVvfmHnj02DHeQ6XcHOgTfFsGyonKOpShMH1x6nk9o" crossorigin="anonymous"></script>
+  <script type="module" src="/static/app.js"></script>
 </head>
 <body>
-  <main class="foundation">
-    <h1>Workspace</h1>
-  </main>
+  <div id="loading" class="loading-screen" role="status">Loading…</div>
+  <div id="shell" hidden>
+    <header class="topbar">
+      <a class="brand brand-flush" href="/app"><img src="/static/favicon.svg" alt="" width="28" height="28"> RAG Document Chat</a>
+      <div class="actions">
+        <span id="user-label" class="muted"></span>
+        <button id="theme-btn" class="btn btn-ghost" type="button" aria-label="Change theme">Theme: system</button>
+        <button id="signout-btn" class="btn" type="button">Sign out</button>
+      </div>
+    </header>
+    <main class="page">
+      <section class="card" aria-labelledby="account-h">
+        <h2 id="account-h">Your account</h2>
+        <p id="quota" class="muted"></p>
+      </section>
+      <section class="card danger-zone" aria-labelledby="danger-h">
+        <h2 id="danger-h">Delete account</h2>
+        <p class="muted">Permanently deletes your account, documents, conversations and feedback. This cannot be undone.</p>
+        <button id="delete-btn" class="btn btn-danger" type="button">Delete my account…</button>
+      </section>
+    </main>
+  </div>
+
+  <dialog id="delete-dialog" aria-labelledby="delete-title">
+    <form method="dialog" id="delete-form" novalidate>
+      <h2 id="delete-title">Delete your account?</h2>
+      <p>All your documents and conversations will be permanently removed. Type <strong>DELETE</strong> to confirm.</p>
+      <div id="delete-alert"></div>
+      <div class="field"><label for="delete-confirm">Confirmation</label>
+        <input id="delete-confirm" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false"></div>
+      <div class="dialog-actions">
+        <button id="delete-cancel" class="btn" type="button">Cancel</button>
+        <button id="delete-submit" class="btn btn-danger" type="submit" disabled>Delete forever</button>
+      </div>
+    </form>
+  </dialog>
 </body>
 </html>

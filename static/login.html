@@ -4,12 +4,47 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Sign in · RAG Document Chat</title>
+  <meta name="description" content="Sign in to chat with your own documents.">
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/static/style.css">
+  <script src="/static/vendor/supabase.js" integrity="sha384-0w2KAL2YHP6wKOkUDzkCDGgVvfmHnj02DHeQ6XcHOgTfFsGyonKOpShMH1x6nk9o" crossorigin="anonymous"></script>
+  <script type="module" src="/static/login.js"></script>
 </head>
 <body>
-  <main class="foundation">
-    <h1>Sign in</h1>
-    <p><a href="/">Back</a></p>
+  <a class="skip-link" href="#main">Skip to form</a>
+  <main id="main" class="auth-wrap">
+    <div class="auth-card">
+      <a class="brand" href="/"><img src="/static/favicon.svg" alt="" width="28" height="28"> RAG Document Chat</a>
+      <div class="tabs" role="tablist" aria-label="Account">
+        <button id="tab-signin" role="tab" aria-selected="true" aria-controls="form-signin" type="button">Sign in</button>
+        <button id="tab-signup" role="tab" aria-selected="false" aria-controls="form-signup" tabindex="-1" type="button">Create account</button>
+      </div>
+      <div id="alert"></div>
+
+      <form id="form-signin" role="tabpanel" aria-labelledby="tab-signin" novalidate>
+        <div class="field"><label for="signin-email">Email</label>
+          <input id="signin-email" type="email" autocomplete="email" required><span class="error" aria-live="polite"></span></div>
+        <div class="field"><label for="signin-password">Password</label>
+          <input id="signin-password" type="password" autocomplete="current-password" required><span class="error" aria-live="polite"></span></div>
+        <button id="signin-submit" class="btn btn-primary btn-block" type="submit">Sign in</button>
+        <p class="center"><button id="forgot" class="link-btn" type="button">Forgot password?</button></p>
+      </form>
+
+      <form id="form-signup" role="tabpanel" aria-labelledby="tab-signup" hidden novalidate>
+        <div class="field"><label for="signup-name">Name</label>
+          <input id="signup-name" type="text" autocomplete="name" maxlength="80" required><span class="error" aria-live="polite"></span></div>
+        <div class="field"><label for="signup-email">Email</label>
+          <input id="signup-email" type="email" autocomplete="email" required><span class="error" aria-live="polite"></span></div>
+        <div class="field"><label for="signup-password">Password</label>
+          <input id="signup-password" type="password" autocomplete="new-password" minlength="8" required>
+          <span class="hint">At least 8 characters.</span><span class="error" aria-live="polite"></span></div>
+        <button id="signup-submit" class="btn btn-primary btn-block" type="submit">Create account</button>
+      </form>
+
+      <div class="divider">or</div>
+      <button class="btn btn-block" type="button" data-google data-label="Continue with Google">Continue with Google</button>
+      <p class="muted note">Your documents stay private to your account.</p>
+    </div>
   </main>
 </body>
 </html>

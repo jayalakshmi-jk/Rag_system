@@ -41,6 +41,8 @@ jobs:
             requirements-dev.txt
       - name: Install dependencies
         run: pip install -r requirements-dev.txt
+      - name: Install Chromium for browser tests
+        run: playwright install --with-deps chromium
       - name: Ruff (lint)
         run: ruff check .
       - name: Ruff (format)
