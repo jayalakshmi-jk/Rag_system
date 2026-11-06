@@ -11,18 +11,19 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import APIRouter, Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from starlette.responses import Response
 from starlette.types import Scope
 
+from app.auth import enforce_ip_limit
 from app.config import Settings, load_settings
 from app.container import Services, build_services
 from app.errors import install_exception_handlers
 from app.logging import log_event, setup_logging
 from app.middleware import RequestContextMiddleware
-from app.routes import health
+from app.routes import health, me
 from app.routes.pages import build_pages_router
 
 logger = logging.getLogger(__name__)
@@ -89,6 +90,9 @@ def create_app(
 
     install_exception_handlers(app)
     app.include_router(health.router)
+    api = APIRouter(prefix="/api", dependencies=[Depends(enforce_ip_limit)])
+    api.include_router(me.router)
+    app.include_router(api)
     static_dir = static_dir or STATIC_DIR
     app.include_router(build_pages_router(static_dir))
     app.mount("/static", RevalidatingStaticFiles(directory=static_dir), name="static")

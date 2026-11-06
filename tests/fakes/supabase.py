@@ -21,6 +21,7 @@ from types import SimpleNamespace
 from typing import Any
 
 from postgrest.exceptions import APIError
+from supabase_auth.errors import AuthApiError
 
 Row = dict[str, Any]
 
@@ -180,7 +181,7 @@ class _FakeAuthAdmin:
         if self.fail_with is not None:
             raise self.fail_with
         if user_id not in self.db.auth_users:
-            raise api_error("User not found", "404")
+            raise AuthApiError("User not found", 404, "user_not_found")
         self.deleted.append(user_id)
         self.db._delete_user(user_id)
 

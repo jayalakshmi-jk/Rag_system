@@ -45,6 +45,17 @@ class AuthError(AppError):
         super().__init__(401, code, message, headers={"WWW-Authenticate": "Bearer"})
 
 
+class RateLimitError(AppError):
+    def __init__(self, retry_after: int, message: str | None = None) -> None:
+        super().__init__(
+            429,
+            "RATE_LIMITED",
+            message or "Too many requests. Please slow down and try again shortly.",
+            headers={"Retry-After": str(max(1, retry_after))},
+        )
+        self.retry_after = max(1, retry_after)
+
+
 class DatabaseError(AppError):
     def __init__(self, pg_code: str | None = None, *, transient: bool = False) -> None:
         if transient:

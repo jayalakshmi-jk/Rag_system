@@ -30,6 +30,8 @@ class Settings(BaseSettings):
     supabase_anon_key: SecretStr
     supabase_service_key: SecretStr
     supabase_jwt_secret: SecretStr | None = None
+    # Override only if your tokens carry a different `iss` (custom auth domain).
+    supabase_jwt_issuer: str | None = None
 
     # Anthropic
     anthropic_api_key: SecretStr
@@ -58,6 +60,8 @@ class Settings(BaseSettings):
     rate_limit_chat_per_minute: int = Field(default=12, ge=1)
     rate_limit_upload_per_hour: int = Field(default=30, ge=1)
     rate_limit_account_per_hour: int = Field(default=5, ge=1)
+    rate_limit_auth_failures_per_minute: int = Field(default=20, ge=1)
+    account_cache_seconds: int = Field(default=60, ge=0, le=3600)
 
     # Ingestion
     ingest_timeout_seconds: int = Field(default=900, ge=30)
@@ -74,7 +78,7 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     port: int = Field(default=8000, ge=1, le=65535)
 
-    @field_validator("supabase_jwt_secret", mode="before")
+    @field_validator("supabase_jwt_secret", "supabase_jwt_issuer", mode="before")
     @classmethod
     def _blank_secret_is_none(cls, value: object) -> object:
         if isinstance(value, str) and not value.strip():
@@ -146,6 +150,14 @@ class Settings(BaseSettings):
     @property
     def origins(self) -> list[str]:
         return [o.strip().rstrip("/") for o in self.allowed_origins.split(",") if o.strip()]
+
+    @property
+    def jwt_issuer(self) -> str:
+        return (self.supabase_jwt_issuer or f"{self.supabase_url}/auth/v1").rstrip("/")
+
+    @property
+    def jwks_url(self) -> str:
+        return f"{self.supabase_url}/auth/v1/.well-known/jwks.json"
 
     @property
     def supabase_origin(self) -> str:
