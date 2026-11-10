@@ -38,6 +38,7 @@ class Stack:
     db: FakeSupabase
     auth: FakeGoTrue
     services: Services
+    llm: FakeLLM
 
 
 def free_port() -> int:
@@ -87,7 +88,7 @@ def stack() -> Iterator[Stack]:
     while not server.started and time.time() < deadline:
         time.sleep(0.05)
     assert server.started, "test server did not start"
-    yield Stack(base_url, db, auth, services)
+    yield Stack(base_url, db, auth, services, llm)
     server.should_exit = True
     thread.join(timeout=5)
     auth.stop()

@@ -9,29 +9,114 @@
   <script src="/static/vendor/supabase.js" integrity="sha384-0w2KAL2YHP6wKOkUDzkCDGgVvfmHnj02DHeQ6XcHOgTfFsGyonKOpShMH1x6nk9o" crossorigin="anonymous"></script>
   <script type="module" src="/static/app.js"></script>
 </head>
-<body>
+<body class="app-body">
+  <a class="skip-link" href="#question">Skip to the question box</a>
   <div id="loading" class="loading-screen" role="status">Loading…</div>
-  <div id="shell" hidden>
+  <div id="shell" class="shell" hidden>
     <header class="topbar">
-      <a class="brand brand-flush" href="/app"><img src="/static/favicon.svg" alt="" width="28" height="28"> RAG Document Chat</a>
+      <a class="brand brand-flush" href="/app"><img src="/static/favicon.svg" alt="" width="28" height="28"> <span class="brand-name">RAG Document Chat</span></a>
       <div class="actions">
-        <span id="user-label" class="muted"></span>
+        <span id="quota-pill" class="pill" aria-live="polite"></span>
         <button id="theme-btn" class="btn btn-ghost" type="button" aria-label="Change theme">Theme: system</button>
-        <button id="signout-btn" class="btn" type="button">Sign out</button>
+        <button id="account-btn" class="btn" type="button" aria-haspopup="dialog">Account</button>
       </div>
     </header>
-    <main class="page">
-      <section class="card" aria-labelledby="account-h">
-        <h2 id="account-h">Your account</h2>
-        <p id="quota" class="muted"></p>
-      </section>
-      <section class="card danger-zone" aria-labelledby="danger-h">
-        <h2 id="danger-h">Delete account</h2>
-        <p class="muted">Permanently deletes your account, documents, conversations and feedback. This cannot be undone.</p>
-        <button id="delete-btn" class="btn btn-danger" type="button">Delete my account…</button>
-      </section>
-    </main>
+
+    <div id="workspace" class="workspace" data-view="chat">
+      <aside id="left" class="panel panel-left" aria-label="Conversations">
+        <button id="new-chat" class="btn btn-primary btn-block" type="button">+ New chat</button>
+        <div class="field search"><label class="sr-only" for="conv-search">Search conversations</label>
+          <input id="conv-search" type="search" placeholder="Search conversations" maxlength="100" autocomplete="off"></div>
+        <div id="conv-list" class="conv-list"></div>
+        <p id="conv-empty" class="muted pad"></p>
+      </aside>
+
+      <main id="center" class="panel panel-center" aria-label="Chat">
+        <div id="messages" class="messages" role="log" aria-live="polite" aria-label="Conversation"></div>
+        <div id="empty-state" class="empty-state">
+          <div id="onboarding" class="onboarding">
+            <h1>Chat with your documents</h1>
+            <ol>
+              <li><strong>Upload</strong> a PDF, TXT or Markdown file.</li>
+              <li><strong>Wait</strong> a moment while it is read and indexed.</li>
+              <li><strong>Ask</strong> in English, தமிழ் or Tanglish, and get answers with page references.</li>
+            </ol>
+            <button id="doc-empty-upload" class="btn btn-primary" type="button">Upload your first document</button>
+            <p class="muted">Scanned PDFs (images only) are not supported yet. Your documents stay private to your account.</p>
+          </div>
+          <div id="starter" class="onboarding" hidden>
+            <h1>Ask about your documents</h1>
+            <p class="muted">Try one of these, or type your own question.</p>
+            <div class="suggestions">
+              <button class="chip" type="button" data-starter="Summarize the key points of my documents.">Summarize the key points</button>
+              <button class="chip" type="button" data-starter="What are the most important details I should remember?">Most important details</button>
+              <button class="chip" type="button" data-starter="இந்த ஆவணத்தின் முக்கிய கருத்துகள் என்ன?">முக்கிய கருத்துகள் என்ன?</button>
+              <button class="chip" type="button" data-starter="Indha document-la mukkiyamana points enna?">Mukkiyamana points enna?</button>
+            </div>
+          </div>
+        </div>
+        <form id="composer" class="composer" autocomplete="off">
+          <div class="composer-options">
+            <span id="scope" class="muted"></span>
+            <label class="sr-only" for="language">Answer language</label>
+            <select id="language"><option value="auto">Language: Auto</option><option value="en">English</option><option value="ta">தமிழ்</option><option value="tanglish">Tanglish</option></select>
+            <label class="sr-only" for="style">Answer style</label>
+            <select id="style"><option value="balanced">Balanced</option><option value="concise">Concise</option><option value="detailed">Detailed</option></select>
+          </div>
+          <div class="composer-row">
+            <label class="sr-only" for="question">Your question</label>
+            <textarea id="question" rows="1" placeholder="Ask about your documents…" enterkeyhint="send"></textarea>
+            <button id="send-btn" class="btn btn-primary" type="submit" disabled>Send</button>
+            <button id="stop-btn" class="btn" type="button" hidden>Stop</button>
+          </div>
+          <p class="muted hint-line">Enter to send · Shift+Enter for a new line · Answers come only from your documents.</p>
+        </form>
+      </main>
+
+      <aside id="right" class="panel panel-right" aria-label="Documents and sources">
+        <div id="right-tabs" class="tabs" role="tablist" aria-label="Right panel">
+          <button type="button" role="tab" data-tab="docs" aria-selected="true">Documents</button>
+          <button type="button" role="tab" data-tab="source" aria-selected="false">Source</button>
+        </div>
+        <section id="tab-docs" role="tabpanel">
+          <div id="dropzone" class="dropzone">
+            <button id="upload-btn" class="btn btn-block" type="button">Upload documents</button>
+            <p class="muted">or drag files here · PDF, TXT, MD</p>
+            <input id="file-input" type="file" accept=".pdf,.txt,.md,application/pdf,text/plain,text/markdown" multiple hidden>
+          </div>
+          <p id="doc-count" class="muted pad-x"></p>
+          <p class="muted pad-x small">Tick documents to limit answers to them. With none ticked, all ready documents are used.</p>
+          <ul id="doc-list" class="doc-list"></ul>
+          <p id="doc-empty" class="muted pad">No documents yet.</p>
+        </section>
+        <section id="tab-source" role="tabpanel" hidden>
+          <h2 id="source-title" class="source-title">Select a citation to see its source</h2>
+          <p id="source-meta" class="muted pad-x"></p>
+          <div id="source-body" class="source-body"></div>
+        </section>
+      </aside>
+    </div>
+
+    <nav class="mobile-nav" aria-label="Sections">
+      <button type="button" data-view="left">Chats</button>
+      <button type="button" data-view="chat" aria-current="true">Chat</button>
+      <button type="button" data-view="right">Documents</button>
+    </nav>
   </div>
+
+  <dialog id="account-dialog" aria-labelledby="account-title">
+    <h2 id="account-title">Your account</h2>
+    <p id="account-name" class="muted"></p>
+    <p id="account-quota" class="muted"></p>
+    <div class="dialog-actions">
+      <button id="signout-btn" class="btn" type="button">Sign out</button>
+      <button id="account-close" class="btn" type="button">Close</button>
+    </div>
+    <hr>
+    <h3>Delete account</h3>
+    <p class="muted">Permanently deletes your account, documents, conversations and feedback. This cannot be undone.</p>
+    <button id="delete-btn" class="btn btn-danger" type="button">Delete my account…</button>
+  </dialog>
 
   <dialog id="delete-dialog" aria-labelledby="delete-title">
     <form method="dialog" id="delete-form" novalidate>
@@ -43,6 +128,37 @@
       <div class="dialog-actions">
         <button id="delete-cancel" class="btn" type="button">Cancel</button>
         <button id="delete-submit" class="btn btn-danger" type="submit" disabled>Delete forever</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="confirm-dialog" aria-labelledby="confirm-title">
+    <h2 id="confirm-title"></h2>
+    <p id="confirm-message"></p>
+    <div class="dialog-actions">
+      <button id="confirm-cancel" class="btn" type="button">Cancel</button>
+      <button id="confirm-ok" class="btn btn-primary" type="button">OK</button>
+    </div>
+  </dialog>
+
+  <dialog id="prompt-dialog" aria-labelledby="prompt-title">
+    <form id="prompt-form" method="dialog">
+      <h2 id="prompt-title"></h2>
+      <div class="field"><label class="sr-only" for="prompt-input">Name</label><input id="prompt-input" type="text"></div>
+      <div class="dialog-actions">
+        <button id="prompt-cancel" class="btn" type="button">Cancel</button>
+        <button class="btn btn-primary" type="submit">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="reason-dialog" aria-labelledby="reason-title">
+    <form id="reason-form" method="dialog">
+      <h2 id="reason-title">What went wrong?</h2>
+      <div class="field"><label class="sr-only" for="reason-select">Reason</label><select id="reason-select"></select></div>
+      <div class="dialog-actions">
+        <button id="reason-skip" class="btn" type="button">Skip</button>
+        <button class="btn btn-primary" type="submit">Send feedback</button>
       </div>
     </form>
   </dialog>

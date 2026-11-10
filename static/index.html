@@ -3,14 +3,47 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>RAG Document Chat</title>
+  <title>RAG Document Chat · Ask your documents anything</title>
+  <meta name="description" content="Upload your PDFs and notes, then ask questions in English, Tamil or Tanglish. Answers come only from your documents, with page references.">
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/static/style.css">
+  <script type="module" src="/static/landing.js"></script>
 </head>
 <body>
-  <main class="foundation">
-    <h1>RAG Document Chat</h1>
-    <p>Chat with your documents. Understand them your way.</p>
-    <p><a href="/login">Sign in</a></p>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="landing-nav">
+    <a class="brand brand-flush" href="/"><img src="/static/favicon.svg" alt="" width="28" height="28"> RAG Document Chat</a>
+    <nav aria-label="Account"><a class="btn" href="/login">Sign in</a></nav>
+  </header>
+  <main id="main">
+    <section class="hero">
+      <h1>Ask your documents. Get answers you can verify.</h1>
+      <p class="lead">Upload PDFs, text and Markdown files, then chat in English, தமிழ் or Tanglish. Every answer comes only from your own documents, with the page it came from.</p>
+      <div class="cta">
+        <a class="btn btn-primary" id="cta-start" href="/login#signup">Get started free</a>
+        <a class="btn" href="/login">I already have an account</a>
+      </div>
+      <div class="demo" aria-label="Example conversation">
+        <div class="bubble q">Refund policy-la ethana days?</div>
+        <div class="bubble">Refund-ku <strong>30 days</strong> time irukku, product-a use pannaama return pannanum. <em>[1]</em> <span class="muted">· policy.pdf, page 4</span></div>
+      </div>
+    </section>
+    <section class="features" aria-label="Features">
+      <article class="feature"><h2>Grounded answers</h2><p>If it is not in your documents, we say so instead of guessing.</p></article>
+      <article class="feature"><h2>Page citations</h2><p>Click a citation to see the exact passage, highlighted on its page.</p></article>
+      <article class="feature"><h2>Tamil, Tanglish, English</h2><p>Ask in the way you speak. Get the answer in the language you choose.</p></article>
+      <article class="feature"><h2>Private by design</h2><p>Your documents are only ever searched for your account. Delete everything anytime.</p></article>
+    </section>
+    <section class="steps">
+      <h2>How it works</h2>
+      <ol>
+        <li><strong>Upload</strong> one or more PDF, TXT or MD files.</li>
+        <li><strong>We index them</strong> so the right passages can be found instantly.</li>
+        <li><strong>Ask questions</strong> and follow up like a normal chat.</li>
+      </ol>
+      <p class="muted">Scanned, image-only PDFs are not supported yet (no OCR).</p>
+    </section>
   </main>
+  <footer class="landing-foot">Your data stays yours. <a href="/login">Sign in</a></footer>
 </body>
 </html>
