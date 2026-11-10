@@ -16,6 +16,7 @@ from app.main import create_app
 from app.repository import Repository
 from app.services.ingest import IngestService
 from app.services.limits import RateLimiter
+from app.services.retriever import Retriever
 from app.tokens import AccountCache, TokenVerifier
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
@@ -78,6 +79,7 @@ def services(fake_db: FakeSupabase, settings: Settings, fake_embedder: FakeEmbed
         accounts=AccountCache(settings.account_cache_seconds),
         embedder=fake_embedder,
         ingest=IngestService(repo, fake_embedder, settings),
+        retriever=Retriever(repo, fake_embedder, settings),
     )
 
 

@@ -474,3 +474,33 @@ def test_deleting_the_auth_user_removes_all_application_data(conn: psycopg.Conne
     assert conn.execute("select count(*) from documents where id = %s", (keep_doc,)).fetchone() == (
         1,
     )
+
+
+def test_shaped_keyword_queries_work_with_real_full_text_search(conn: psycopg.Connection) -> None:
+    """The retriever sends OR-joined terms; a sentence-long query must not need every word."""
+    from app.services.retriever import keyword_query
+
+    a = add_user(conn)
+    doc = add_doc(conn, a, "bio.pdf")
+    hit = add_chunk(conn, a, doc, "Photosynthesis happens in chloroplasts.", vec(d5=1), index=0)
+    add_chunk(conn, a, doc, "Unrelated text about databases.", vec(d6=1), index=1)
+
+    query = keyword_query("What is photosynthesis in plants?")
+    assert query == "photosynthesis or plants"
+    rows = search(conn, a, query, vec(d9=1))
+    assert hit in [r[0] for r in rows]
+
+
+def test_full_text_search_matches_tamil_words(conn: psycopg.Connection) -> None:
+    from app.services.retriever import keyword_query
+
+    a = add_user(conn)
+    doc = add_doc(conn, a, "tamil.txt")
+    hit = add_chunk(conn, a, doc, "ஒளிச்சேர்க்கை என்பது தாவரங்களில் நடைபெறும் செயல்முறை.", vec(d7=1))
+    add_chunk(conn, a, doc, "வேறு தலைப்பு பற்றிய உரை", vec(d8=1), index=1)
+
+    ranked = conn.execute(
+        "select c.id from chunks c where c.tsv @@ websearch_to_tsquery('simple', %s)",
+        (keyword_query("ஒளிச்சேர்க்கை என்றால் என்ன?"),),
+    ).fetchall()
+    assert [r[0] for r in ranked] == [hit]

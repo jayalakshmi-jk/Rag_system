@@ -19,6 +19,7 @@ from app.main import create_app
 from app.repository import Repository
 from app.services.ingest import IngestService
 from app.services.limits import RateLimiter
+from app.services.retriever import Retriever
 from app.tokens import AccountCache, TokenVerifier
 
 from tests.conftest import JWT_SECRET, TEST_SETTINGS
@@ -67,6 +68,7 @@ def stack() -> Iterator[Stack]:
         accounts=AccountCache(settings.account_cache_seconds),
         embedder=embedder,
         ingest=IngestService(Repository(db), embedder, settings),
+        retriever=Retriever(Repository(db), embedder, settings),
     )
     server = uvicorn.Server(
         uvicorn.Config(

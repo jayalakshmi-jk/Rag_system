@@ -10,6 +10,7 @@ from app.repository import Repository
 from app.services.embedder import Embedder, VoyageEmbedder
 from app.services.ingest import IngestService
 from app.services.limits import RateLimiter
+from app.services.retriever import Retriever
 from app.tokens import AccountCache, TokenVerifier
 
 
@@ -21,6 +22,7 @@ class Services:
     accounts: AccountCache
     embedder: Embedder
     ingest: IngestService
+    retriever: Retriever
 
     async def aclose(self) -> None:
         """Release network resources on shutdown."""
@@ -36,4 +38,5 @@ def build_services(settings: Settings) -> Services:
         accounts=AccountCache(settings.account_cache_seconds),
         embedder=embedder,
         ingest=IngestService(repo, embedder, settings),
+        retriever=Retriever(repo, embedder, settings),
     )

@@ -248,6 +248,39 @@ class Repository:
             )
         )
 
+    def hybrid_search(
+        self,
+        user_id: str,
+        query_text: str,
+        embedding: list[float],
+        document_ids: list[str] | None,
+        k: int,
+        candidates: int,
+    ) -> list[Row]:
+        """Vector + full-text search fused in SQL; scoped to the user's READY documents."""
+        data = run(
+            self.client.rpc(
+                "hybrid_search",
+                {
+                    "q_text": query_text,
+                    "q_emb": embedding,
+                    "p_user": user_id,
+                    "doc_ids": document_ids,
+                    "k": k,
+                    "candidates": candidates,
+                },
+            )
+        )
+        return rows(data)
+
+    def count_ready_documents(self, user_id: str, document_ids: list[str] | None = None) -> int:
+        query = (
+            self.client.table("documents").select("id").eq("user_id", user_id).eq("status", "ready")
+        )
+        if document_ids is not None:
+            query = query.in_("id", document_ids)
+        return len(rows(run(query)))
+
     # ---------------------------------------------------------------- accounts
     def profile_exists(self, user_id: str) -> bool:
         data = run(self.client.table("profiles").select("id").eq("id", user_id).limit(1))
