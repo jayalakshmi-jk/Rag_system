@@ -25,8 +25,10 @@ class AppError(Exception):
         message: str,
         *,
         headers: dict[str, str] | None = None,
+        extra: dict[str, str] | None = None,
     ) -> None:
         super().__init__(message)
+        self.extra = extra or {}
         self.status_code = status_code
         self.code = code
         self.message = message
@@ -77,9 +79,12 @@ class ProviderError(AppError):
         self.provider = provider
 
 
-def error_body(code: str, message: str, request_id: str | None = None) -> dict[str, dict[str, str]]:
+def error_body(
+    code: str, message: str, request_id: str | None = None, extra: dict[str, str] | None = None
+) -> dict[str, dict[str, str]]:
     return {
         "error": {
+            **(extra or {}),
             "code": code,
             "message": message,
             "request_id": request_id or request_id_var.get(),
@@ -88,9 +93,15 @@ def error_body(code: str, message: str, request_id: str | None = None) -> dict[s
 
 
 def error_response(
-    status_code: int, code: str, message: str, headers: dict[str, str] | None = None
+    status_code: int,
+    code: str,
+    message: str,
+    headers: dict[str, str] | None = None,
+    extra: dict[str, str] | None = None,
 ) -> JSONResponse:
-    return JSONResponse(error_body(code, message), status_code=status_code, headers=headers)
+    return JSONResponse(
+        error_body(code, message, extra=extra), status_code=status_code, headers=headers
+    )
 
 
 _HTTP_CODES = {
@@ -123,7 +134,7 @@ def install_exception_handlers(app: FastAPI) -> None:
             log_event(
                 logger, "app_error", level=logging.WARNING, code=exc.code, status=exc.status_code
             )
-        return error_response(exc.status_code, exc.code, exc.message, exc.headers)
+        return error_response(exc.status_code, exc.code, exc.message, exc.headers, exc.extra)
 
     @app.exception_handler(RequestValidationError)
     async def _validation(_: Request, exc: RequestValidationError) -> JSONResponse:

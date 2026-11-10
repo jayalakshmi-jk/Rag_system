@@ -17,11 +17,13 @@ from app.config import Settings
 from app.container import Services
 from app.main import create_app
 from app.repository import Repository
+from app.services.ingest import IngestService
 from app.services.limits import RateLimiter
 from app.tokens import AccountCache, TokenVerifier
 
 from tests.conftest import JWT_SECRET, TEST_SETTINGS
 from tests.e2e.fake_gotrue import FakeGoTrue
+from tests.fakes.embedder import FakeEmbedder
 from tests.fakes.supabase import FakeSupabase
 
 playwright_sync = pytest.importorskip("playwright.sync_api")
@@ -57,11 +59,14 @@ def stack() -> Iterator[Stack]:
             "supabase_jwt_secret": JWT_SECRET,
         },
     )
+    embedder = FakeEmbedder()
     services = Services(
         repo=Repository(db),
         verifier=TokenVerifier(settings),
         limiter=RateLimiter(),
         accounts=AccountCache(settings.account_cache_seconds),
+        embedder=embedder,
+        ingest=IngestService(Repository(db), embedder, settings),
     )
     server = uvicorn.Server(
         uvicorn.Config(

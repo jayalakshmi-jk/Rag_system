@@ -14,11 +14,13 @@ from app.config import Settings
 from app.container import Services
 from app.main import create_app
 from app.repository import Repository
+from app.services.ingest import IngestService
 from app.services.limits import RateLimiter
 from app.tokens import AccountCache, TokenVerifier
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
+from tests.fakes.embedder import FakeEmbedder
 from tests.fakes.supabase import FakeSupabase
 
 JWT_SECRET = "unit-test-jwt-secret-that-is-long-enough-for-hs256-signing"
@@ -62,12 +64,20 @@ def fake_db() -> FakeSupabase:
 
 
 @pytest.fixture
-def services(fake_db: FakeSupabase, settings: Settings) -> Services:
+def fake_embedder() -> FakeEmbedder:
+    return FakeEmbedder()
+
+
+@pytest.fixture
+def services(fake_db: FakeSupabase, settings: Settings, fake_embedder: FakeEmbedder) -> Services:
+    repo = Repository(fake_db)
     return Services(
-        repo=Repository(fake_db),
+        repo=repo,
         verifier=TokenVerifier(settings),
         limiter=RateLimiter(),
         accounts=AccountCache(settings.account_cache_seconds),
+        embedder=fake_embedder,
+        ingest=IngestService(repo, fake_embedder, settings),
     )
 
 

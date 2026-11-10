@@ -46,6 +46,7 @@ class Settings(BaseSettings):
     # Limits and cost controls
     daily_question_limit: int = Field(default=50, ge=1, le=10_000)
     max_upload_mb: int = Field(default=25, ge=1, le=100)
+    max_documents_per_user: int = Field(default=100, ge=1, le=10_000)
     max_document_pages: int = Field(default=500, ge=1, le=5_000)
     max_question_length: int = Field(default=2_000, ge=50, le=20_000)
     max_context_tokens: int = Field(default=6_000, ge=500, le=50_000)
