@@ -14,6 +14,7 @@ from app.config import Settings
 from app.container import Services
 from app.main import create_app
 from app.repository import Repository
+from app.services.chat import ChatService
 from app.services.ingest import IngestService
 from app.services.limits import RateLimiter
 from app.services.retriever import Retriever
@@ -22,6 +23,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from tests.fakes.embedder import FakeEmbedder
+from tests.fakes.llm import FakeLLM
 from tests.fakes.supabase import FakeSupabase
 
 JWT_SECRET = "unit-test-jwt-secret-that-is-long-enough-for-hs256-signing"
@@ -70,8 +72,16 @@ def fake_embedder() -> FakeEmbedder:
 
 
 @pytest.fixture
-def services(fake_db: FakeSupabase, settings: Settings, fake_embedder: FakeEmbedder) -> Services:
+def fake_llm() -> FakeLLM:
+    return FakeLLM()
+
+
+@pytest.fixture
+def services(
+    fake_db: FakeSupabase, settings: Settings, fake_embedder: FakeEmbedder, fake_llm: FakeLLM
+) -> Services:
     repo = Repository(fake_db)
+    retriever = Retriever(repo, fake_embedder, settings)
     return Services(
         repo=repo,
         verifier=TokenVerifier(settings),
@@ -79,7 +89,9 @@ def services(fake_db: FakeSupabase, settings: Settings, fake_embedder: FakeEmbed
         accounts=AccountCache(settings.account_cache_seconds),
         embedder=fake_embedder,
         ingest=IngestService(repo, fake_embedder, settings),
-        retriever=Retriever(repo, fake_embedder, settings),
+        retriever=retriever,
+        llm=fake_llm,
+        chat=ChatService(repo, retriever, fake_llm, settings),
     )
 
 

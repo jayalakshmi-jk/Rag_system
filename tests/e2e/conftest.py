@@ -17,6 +17,7 @@ from app.config import Settings
 from app.container import Services
 from app.main import create_app
 from app.repository import Repository
+from app.services.chat import ChatService
 from app.services.ingest import IngestService
 from app.services.limits import RateLimiter
 from app.services.retriever import Retriever
@@ -25,6 +26,7 @@ from app.tokens import AccountCache, TokenVerifier
 from tests.conftest import JWT_SECRET, TEST_SETTINGS
 from tests.e2e.fake_gotrue import FakeGoTrue
 from tests.fakes.embedder import FakeEmbedder
+from tests.fakes.llm import FakeLLM
 from tests.fakes.supabase import FakeSupabase
 
 playwright_sync = pytest.importorskip("playwright.sync_api")
@@ -61,6 +63,8 @@ def stack() -> Iterator[Stack]:
         },
     )
     embedder = FakeEmbedder()
+    llm = FakeLLM()
+    retriever = Retriever(Repository(db), embedder, settings)
     services = Services(
         repo=Repository(db),
         verifier=TokenVerifier(settings),
@@ -68,7 +72,9 @@ def stack() -> Iterator[Stack]:
         accounts=AccountCache(settings.account_cache_seconds),
         embedder=embedder,
         ingest=IngestService(Repository(db), embedder, settings),
-        retriever=Retriever(Repository(db), embedder, settings),
+        retriever=retriever,
+        llm=llm,
+        chat=ChatService(Repository(db), retriever, llm, settings),
     )
     server = uvicorn.Server(
         uvicorn.Config(

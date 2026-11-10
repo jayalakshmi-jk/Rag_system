@@ -53,6 +53,7 @@ class Settings(BaseSettings):
     max_output_tokens: int = Field(default=1_200, ge=100, le=8_000)
     context_chunks: int = Field(default=6, ge=5, le=8)
     retrieval_candidates: int = Field(default=20, ge=10, le=50)
+    suggestions_enabled: bool = True
     history_messages: int = Field(default=8, ge=0, le=30)
 
     # Rate limits (per process; see README for multi-instance notes)

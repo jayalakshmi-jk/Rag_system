@@ -281,6 +281,177 @@ class Repository:
             query = query.in_("id", document_ids)
         return len(rows(run(query)))
 
+    # ------------------------------------------------------------ conversations
+    CONVERSATION_FIELDS = "id,title,created_at,updated_at"
+
+    def create_conversation(self, user_id: str, title: str) -> Row:
+        created = first(
+            run(self.client.table("conversations").insert({"user_id": user_id, "title": title}))
+        )
+        if created is None:
+            raise DatabaseError()
+        return created
+
+    def get_conversation(self, user_id: str, conversation_id: str) -> Row | None:
+        return first(
+            run(
+                self.client.table("conversations")
+                .select(self.CONVERSATION_FIELDS)
+                .eq("user_id", user_id)
+                .eq("id", conversation_id)
+                .limit(1)
+            )
+        )
+
+    def list_conversations(self, user_id: str, limit: int = 100) -> list[Row]:
+        return rows(
+            run(
+                self.client.table("conversations")
+                .select(self.CONVERSATION_FIELDS)
+                .eq("user_id", user_id)
+                .order("updated_at", desc=True)
+                .limit(limit)
+            )
+        )
+
+    def search_conversations(self, user_id: str, text: str, limit: int = 50) -> list[Row]:
+        data = run(
+            self.client.rpc(
+                "search_conversations", {"p_user": user_id, "q": text, "max_rows": limit}
+            )
+        )
+        return [{k: r[k] for k in self.CONVERSATION_FIELDS.split(",")} for r in rows(data)]
+
+    def rename_conversation(self, user_id: str, conversation_id: str, title: str) -> bool:
+        data = run(
+            self.client.table("conversations")
+            .update({"title": title})
+            .eq("user_id", user_id)
+            .eq("id", conversation_id)
+        )
+        return bool(rows(data))
+
+    def delete_conversation(self, user_id: str, conversation_id: str) -> bool:
+        data = run(
+            self.client.table("conversations")
+            .delete()
+            .eq("user_id", user_id)
+            .eq("id", conversation_id)
+        )
+        return bool(rows(data))
+
+    def add_message(
+        self,
+        conversation_id: str,
+        role: str,
+        content: str,
+        sources: list[dict[str, Any]] | None = None,
+    ) -> Row:
+        created = first(
+            run(
+                self.client.table("messages").insert(
+                    {
+                        "conversation_id": conversation_id,
+                        "role": role,
+                        "content": content,
+                        "sources": sources,
+                    }
+                )
+            )
+        )
+        if created is None:
+            raise DatabaseError()
+        return created
+
+    def delete_message(self, conversation_id: str, message_id: str) -> None:
+        run(
+            self.client.table("messages")
+            .delete()
+            .eq("conversation_id", conversation_id)
+            .eq("id", message_id)
+        )
+
+    def list_messages(self, conversation_id: str, limit: int = 500) -> list[Row]:
+        return rows(
+            run(
+                self.client.table("messages")
+                .select("id,role,content,sources,created_at")
+                .eq("conversation_id", conversation_id)
+                .order("created_at")
+                .limit(limit)
+            )
+        )
+
+    def recent_messages(self, conversation_id: str, limit: int) -> list[Row]:
+        """The last ``limit`` messages, oldest first."""
+        if limit <= 0:
+            return []
+        data = rows(
+            run(
+                self.client.table("messages")
+                .select("role,content")
+                .eq("conversation_id", conversation_id)
+                .order("created_at", desc=True)
+                .limit(limit)
+            )
+        )
+        return list(reversed(data))
+
+    def get_assistant_message_owner(self, user_id: str, message_id: str) -> Row | None:
+        """The message if it is an assistant message in one of this user's conversations."""
+        message = first(
+            run(
+                self.client.table("messages")
+                .select("id,role,conversation_id")
+                .eq("id", message_id)
+                .limit(1)
+            )
+        )
+        if message is None or message["role"] != "assistant":
+            return None
+        conversation = self.get_conversation(user_id, str(message["conversation_id"]))
+        return message if conversation else None
+
+    def feedback_for(self, user_id: str, message_ids: list[str]) -> dict[str, str]:
+        if not message_ids:
+            return {}
+        data = rows(
+            run(
+                self.client.table("message_feedback")
+                .select("message_id,rating")
+                .eq("user_id", user_id)
+                .in_("message_id", message_ids)
+            )
+        )
+        return {str(r["message_id"]): str(r["rating"]) for r in data}
+
+    def set_feedback(self, user_id: str, message_id: str, rating: str, reason: str | None) -> None:
+        run(
+            self.client.table("message_feedback").upsert(
+                {"message_id": message_id, "user_id": user_id, "rating": rating, "reason": reason},
+                on_conflict="message_id,user_id",
+            )
+        )
+
+    def clear_feedback(self, user_id: str, message_id: str) -> None:
+        run(
+            self.client.table("message_feedback")
+            .delete()
+            .eq("user_id", user_id)
+            .eq("message_id", message_id)
+        )
+
+    # -------------------------------------------------------------------- quota
+    def consume_question(self, user_id: str, limit: int) -> bool:
+        data = run(self.client.rpc("consume_question", {"p_user": user_id, "p_limit": limit}))
+        return bool(data)
+
+    def refund_question(self, user_id: str) -> None:
+        run(self.client.rpc("refund_question", {"p_user": user_id}))
+
+    def update_conversation_title(self, user_id: str, conversation_id: str, title: str) -> None:
+        self.rename_conversation(user_id, conversation_id, title)
+
     # ---------------------------------------------------------------- accounts
     def profile_exists(self, user_id: str) -> bool:
         data = run(self.client.table("profiles").select("id").eq("id", user_id).limit(1))

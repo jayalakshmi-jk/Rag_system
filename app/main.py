@@ -23,7 +23,7 @@ from app.container import Services, build_services
 from app.errors import install_exception_handlers
 from app.logging import log_event, setup_logging
 from app.middleware import RequestContextMiddleware
-from app.routes import documents, health, me
+from app.routes import chat, conversations, documents, health, me
 from app.routes.pages import build_pages_router
 
 logger = logging.getLogger(__name__)
@@ -93,6 +93,8 @@ def create_app(
     api = APIRouter(prefix="/api", dependencies=[Depends(enforce_ip_limit)])
     api.include_router(me.router)
     api.include_router(documents.router)
+    api.include_router(chat.router)
+    api.include_router(conversations.router)
     app.include_router(api)
     static_dir = static_dir or STATIC_DIR
     app.include_router(build_pages_router(static_dir))

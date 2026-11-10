@@ -7,9 +7,11 @@ from dataclasses import dataclass
 from app.config import Settings
 from app.db import create_supabase
 from app.repository import Repository
+from app.services.chat import ChatService
 from app.services.embedder import Embedder, VoyageEmbedder
 from app.services.ingest import IngestService
 from app.services.limits import RateLimiter
+from app.services.llm import LLM, AnthropicLLM
 from app.services.retriever import Retriever
 from app.tokens import AccountCache, TokenVerifier
 
@@ -23,6 +25,8 @@ class Services:
     embedder: Embedder
     ingest: IngestService
     retriever: Retriever
+    llm: LLM
+    chat: ChatService
 
     async def aclose(self) -> None:
         """Release network resources on shutdown."""
@@ -31,6 +35,8 @@ class Services:
 def build_services(settings: Settings) -> Services:
     repo = Repository(create_supabase(settings))
     embedder = VoyageEmbedder(settings)
+    retriever = Retriever(repo, embedder, settings)
+    llm = AnthropicLLM(settings)
     return Services(
         repo=repo,
         verifier=TokenVerifier(settings),
@@ -38,5 +44,7 @@ def build_services(settings: Settings) -> Services:
         accounts=AccountCache(settings.account_cache_seconds),
         embedder=embedder,
         ingest=IngestService(repo, embedder, settings),
-        retriever=Retriever(repo, embedder, settings),
+        retriever=retriever,
+        llm=llm,
+        chat=ChatService(repo, retriever, llm, settings),
     )
