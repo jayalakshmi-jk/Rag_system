@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterator
+from typing import Any
 
 from app.errors import ProviderError
 from app.services.llm import Usage
@@ -19,7 +20,7 @@ class FakeLLM:
             "suggest": "What is chlorophyll?\nWhere does it happen?\nWhy is it important?",
             "condense": "",
         }
-        self.stream_calls: list[dict[str, object]] = []
+        self.stream_calls: list[dict[str, Any]] = []
         self.fast_calls: list[tuple[str, str]] = []
 
     def stream_answer(
